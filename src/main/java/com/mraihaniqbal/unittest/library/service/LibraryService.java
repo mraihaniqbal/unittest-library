@@ -6,6 +6,8 @@ import com.mraihaniqbal.unittest.library.dao.ShelfDao;
 import com.mraihaniqbal.unittest.library.entity.Book;
 import com.mraihaniqbal.unittest.library.entity.Shelf;
 import com.mraihaniqbal.unittest.library.enums.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import java.util.*;
 @Service
 public class LibraryService {
 
+    private Logger logger = LoggerFactory.getLogger(LibraryService.class);
     private ShelfDao shelfDao;
     private BookDao bookDao;
 
@@ -38,54 +41,57 @@ public class LibraryService {
         Book book = bookDao.findById(bookId).orElse(null);
         Shelf shelf = this.findById(id);
 
-        String result = "success";
-
         if(book == null || shelf == null){
-            result = "error null paramater";
-        }else{
-            try{
-                List<Book> books = shelf.getBooks();
-                if(books == null){
-                    books = new ArrayList<>();
-                }
-                //update book status
-                book.setBookStatus(Status.SHELVED);
-
-                books.add(book);
-                String newBooks = convertFromList(books);
-
-                //save new json string
-                shelf.setBooks(newBooks);
-
-                shelfDao.save(shelf);
-                bookDao.save(book);
-
-            }catch (IOException io){
-                result = "error IO";
-                io.printStackTrace();
-            }
+            return "error null paramater";
         }
 
-        return result;
+        Integer currentCapacity = shelf.getCurrentCapacity();
+        if(currentCapacity.equals(shelf.getMaxCapacity())){
+            return "full capacity";
+        }
+
+        try{
+            List<Book> books = shelf.getBooks();
+            if(books == null){
+                books = new ArrayList<>();
+            }
+            //update book status
+            book.setBookStatus(Status.SHELVED);
+
+            books.add(book);
+            String newBooks = convertFromList(books);
+
+            //save new json string
+            shelf.setBooks(newBooks);
+            shelf.setCurrentCapacity(currentCapacity+1);
+
+            shelfDao.save(shelf);
+            bookDao.save(book);
+
+        }catch (IOException io){
+            logger.error(io.getMessage());
+            return "error IO";
+        }
+
+        return "success";
     }
 
     public String removeBook(Long id, Long bookId){
-        Shelf shelf = this.findById(id);
         Book book = bookDao.findById(bookId).orElse(null);
-
-        String result = "success";
+        Shelf shelf = this.findById(id);
 
         if(book == null || shelf == null){
-            result = "error";
+            return "error null";
         }else{
             try{
                 List<Book> books = shelf.getBooks();
                 if(books.isEmpty()){
-                    result = "empty book";
+                    return "empty book";
                 }else{
                     books.removeIf(x -> x.getId().equals(bookId));
                     String updatedBooks = convertFromList(books);
                     shelf.setBooks(updatedBooks);
+                    shelf.setCurrentCapacity(shelf.getCurrentCapacity()-1);
                     shelfDao.save(shelf);
 
                     book.setBookStatus(Status.NOT_SHELVED);
@@ -93,11 +99,12 @@ public class LibraryService {
                 }
 
             }catch (IOException io){
-                result = "error IO";
+                logger.error(io.getMessage());
+                return "error IO";
             }
         }
 
-        return result;
+        return "success";
     }
 
     private String convertFromList(List<Book> books) throws IOException{
