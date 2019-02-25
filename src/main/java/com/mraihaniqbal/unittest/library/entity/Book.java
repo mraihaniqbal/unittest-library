@@ -18,10 +18,7 @@ public class Book {
     private String author;
 
     @Enumerated(value = EnumType.STRING)
-    private Status status;
-
-    @ManyToOne
-    private Shelf shelf;
+    private Status bookStatus;
 
     public Long getId() {
         return id;
@@ -55,19 +52,11 @@ public class Book {
         this.author = author;
     }
 
-    public Status getStatus() {
-        return status;
+    public Status getBookStatus() {
+        return bookStatus;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public Shelf getShelf() {
-        return shelf;
-    }
-
-    public void setShelf(Shelf shelf) {
-        this.shelf = shelf;
+    public void setBookStatus(Status bookStatus) {
+        this.bookStatus = bookStatus;
     }
 }

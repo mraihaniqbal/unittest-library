@@ -1,6 +1,13 @@
 package com.mraihaniqbal.unittest.library.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.persistence.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Entity
@@ -17,8 +24,7 @@ public class Shelf {
     @Column(name = "current_capacity", length = 2)
     private Integer currentCapacity;
 
-    @OneToMany(mappedBy = "shelf")
-    private List<Book> books;
+    private String books;
 
     public Long getId() {
         return id;
@@ -44,11 +50,18 @@ public class Shelf {
         this.currentCapacity = currentCapacity;
     }
 
-    public List<Book> getBooks() {
-        return books;
+    public List<Book> getBooks() throws IOException {
+        if(books == null || books.isEmpty()){
+            System.out.println("hai");
+            return null;
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        TypeReference<ArrayList<Book>> typeRef = new TypeReference<ArrayList<Book>>() {};
+        return mapper.readValue(books, typeRef);
     }
 
-    public void setBooks(List<Book> books) {
+    public void setBooks(String books) {
         this.books = books;
     }
 }
